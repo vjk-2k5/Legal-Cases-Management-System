@@ -26,7 +26,7 @@ export default function LoginForm() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[url('/image.jpeg')] bg-cover bg-center">
-      <Card className="mx-auto max-w-md bg-black bg-opacity-70 p-6 rounded-lg shadow-lg">
+      <Card className="mx-auto max-w-md bg-black bg-opacity-50 p-6 rounded-lg shadow-lg">
         <CardHeader className="text-center">
           <h2 className={title({ color: "blue" })}>Legal Cases MS</h2>
         </CardHeader>

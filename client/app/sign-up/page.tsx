@@ -91,7 +91,7 @@ const SignUpPage: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[url('/image.jpeg')] bg-cover bg-center">
-      <Card className="mx-auto w-104 bg-black bg-opacity-70 p-4 rounded-lg shadow-lg">
+      <Card className="mx-auto w-104 bg-black bg-opacity-50 p-4 rounded-lg shadow-lg">
         <CardHeader className="text-center">
           <h2 className={title({ color: "blue" })}>Legal Cases MS</h2>
         </CardHeader>
