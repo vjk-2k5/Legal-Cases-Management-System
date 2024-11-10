@@ -1,0 +1,49 @@
+1. Users Table
+Stores common information for both clients and lawyers.
+
+user_id (INT)
+email (VARCHAR(255))
+password (VARCHAR(255))
+role (VARCHAR(50)) — could be "client" or "lawyer"
+first_name (VARCHAR(255))
+last_name (VARCHAR(255))
+phone_number (VARCHAR(15))
+
+2. Clients Table
+Stores client-specific details.
+
+client_id (INT)
+user_id (INT) — Foreign Key referencing Users.user_id
+additional_client_info (TEXT) — Any client-specific info
+3. Lawyers Table
+Stores lawyer-specific details.
+
+lawyer_id (INT)
+user_id (INT) — Foreign Key referencing Users.user_id
+specialization (VARCHAR(255))\
+
+4. Cases Table
+Stores case details associated with clients and lawyers.
+
+case_id (INT)
+client_id (INT) — Foreign Key referencing Clients.client_id
+lawyer_id (INT) — Foreign Key referencing Lawyers.lawyer_id
+title (VARCHAR(255))
+status (VARCHAR(50))
+next_hearing_date (DATE)
+
+5. Appointments Table
+Stores details about appointments associated with cases.
+
+appointment_id (INT)
+case_id (INT) — Foreign Key referencing Cases.case_id
+appointment_date (DATETIME)
+location (VARCHAR(255))
+
+6. CaseNotes Table
+Stores notes for each case added by lawyers.
+
+note_id (INT)
+case_id (INT) — Foreign Key referencing Cases.case_id
+lawyer_id (INT) — Foreign Key referencing Lawyers.lawyer_id
+note (TEXT)
