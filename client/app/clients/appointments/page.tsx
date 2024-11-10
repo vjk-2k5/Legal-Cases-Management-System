@@ -20,43 +20,55 @@ interface Appointment {
 
 const ClientDashboard: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [cases, setCases] = useState<Case[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [cases, setCases] = useState<Case[]>([
+    {
+      case_id: 1,
+      title: 'Case 1',
+      status: 'Open',
+      next_hearing_date: '2023-11-01',
+      lawyer_id: 1,
+    },
+    {
+      case_id: 2,
+      title: 'Case 2',
+      status: 'Closed',
+      next_hearing_date: '2023-12-15',
+      lawyer_id: 2,
+    },
+  ]);
+
+  const [appointments, setAppointments] = useState<Appointment[]>([
+    {
+      appointment_id: 1,
+      case_id: 1,
+      appointment_date: '2023-10-20T10:00:00',
+      location: 'Courtroom A',
+    },
+    {
+      appointment_id: 2,
+      case_id: 2,
+      appointment_date: '2023-11-05T14:00:00',
+      location: 'Courtroom B',
+    },
+  ]);
+
   const [newAppointment, setNewAppointment] = useState({
+    lawyer_id: '',
     case_id: '',
     appointment_date: '',
     location: '',
   });
 
-  useEffect(() => {
-    // Fetch cases
-    fetch('/api/client/cases')
-      .then((response) => response.json())
-      .then((data) => setCases(data))
-      .catch((error) => console.error(error));
-
-    // Fetch appointments
-    fetch('/api/client/appointments')
-      .then((response) => response.json())
-      .then((data) => setAppointments(data))
-      .catch((error) => console.error(error));
-  }, []);
-
   const handleBookAppointment = () => {
     // Logic to book a new appointment
-    fetch('/api/client/appointments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newAppointment),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setAppointments([...appointments, data]);
-        onClose(); // Close modal after booking
-      })
-      .catch((error) => console.error(error));
+    const newApp = {
+      appointment_id: appointments.length + 1,
+      case_id: parseInt(newAppointment.case_id),
+      appointment_date: newAppointment.appointment_date,
+      location: newAppointment.location,
+    };
+    setAppointments([...appointments, newApp]);
+    onClose(); // Close modal after booking
   };
 
   const upcomingAppointments = appointments.filter(
@@ -69,12 +81,12 @@ const ClientDashboard: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-center mb-8 text-4xl text-blue-600">Client Dashboard</h1>
+      <h1 className="text-center mb-8 text-4xl text-blue-600">Appointments</h1>
 
       <h2 className="text-2xl text-blue-600">Upcoming Appointments</h2>
       <div className="flex flex-wrap gap-6">
         {upcomingAppointments.map((appointment) => (
-          <Card key={appointment.appointment_id} isHoverable variant="bordered" className="flex-1 min-w-[300px] bg-gray-100">
+          <Card key={appointment.appointment_id} isHoverable variant="bordered" className="flex-1 min-w-[300px] ">
             <CardHeader className="bg-blue-600 text-white">
               <h3 className="text-lg">Appointment</h3>
             </CardHeader>
@@ -91,7 +103,7 @@ const ClientDashboard: React.FC = () => {
       <h2 className="mt-8 text-2xl text-blue-600">Recent Appointments</h2>
       <div className="flex flex-wrap gap-6">
         {recentAppointments.map((appointment) => (
-          <Card key={appointment.appointment_id} isHoverable variant="bordered" className="flex-1 min-w-[300px] bg-gray-100">
+          <Card key={appointment.appointment_id} isHoverable variant="bordered" className="flex-1 min-w-[300px]">
             <CardHeader className="bg-blue-600 text-white">
               <h3 className="text-lg">Appointment</h3>
             </CardHeader>
@@ -117,20 +129,17 @@ const ClientDashboard: React.FC = () => {
           </ModalHeader>
           <ModalBody>
             <Input
-              label="Case ID"
-              placeholder="Enter Case ID"
+              label="Lawyer ID"
               value={newAppointment.case_id}
-              onChange={(e) => setNewAppointment({ ...newAppointment, case_id: e.target.value })}
+              onChange={(e) => setNewAppointment({ ...newAppointment, lawyer_id: e.target.value })}
             />
             <DatePicker
               label="Appointment Date"
-              placeholder="Select Date"
               value={newAppointment.appointment_date ? new Date(newAppointment.appointment_date) : undefined}
               onChange={(date) => setNewAppointment({ ...newAppointment, appointment_date: date?.toISOString() || '' })}
             />
             <Input
               label="Location"
-              placeholder="Enter Location"
               value={newAppointment.location}
               onChange={(e) => setNewAppointment({ ...newAppointment, location: e.target.value })}
             />
