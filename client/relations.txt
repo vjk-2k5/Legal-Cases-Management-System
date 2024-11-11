@@ -36,7 +36,8 @@ next_hearing_date (DATE)
 Stores details about appointments associated with cases.
 
 appointment_id (INT)
-case_id (INT) — Foreign Key referencing Cases.case_id
+client_id (INT) — Foreign Key referencing Clients.client_id
+lawyer_id (INT) — Foreign Key referencing Lawyers.lawyer_id
 appointment_date (DATETIME)
 location (VARCHAR(255))
 
