@@ -53,14 +53,14 @@ export const description =
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('user_id', data.user.user_id);
         localStorage.setItem('role', data.user.role);
-        localStorage.setItem('name', data.user.name);
+        localStorage.setItem('name', data.user.first_name);
 
         switch (data.user.role) {
           case 'client':
             router.push('/client/dashboard');
             break;
           case 'lawyer':
-            router.push('/team/registration');
+            router.push('/lawyer/dashboard');
             break;
           default:
             router.push('/');
