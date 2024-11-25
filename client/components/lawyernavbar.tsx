@@ -47,7 +47,7 @@ const LawyerNavbar = () => {
     <NextUINavbar maxWidth="full" className="w-full" position="sticky">
       <NavbarContent className="basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-1" href="/lawyer/dashboard">
+          <NextLink className="flex justify-start items-center gap-1" href="/lawyers/dashboard">
             <Logo />
             <p className="font-bold text-inherit">Lawyer</p>
           </NextLink>
