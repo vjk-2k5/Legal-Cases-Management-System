@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, FormEvent } from 'react'; 
-import { Button, Input, Spacer, Select, SelectItem } from "@nextui-org/react";
+import { Button, Input , Select, SelectItem } from "@nextui-org/react";
 import {
   Card,
   CardHeader,
@@ -11,6 +11,7 @@ import {
 } from "@nextui-org/card"; 
 import { FaGoogle } from "react-icons/fa"; 
 import { title } from "@/components/primitives";
+
 export const description =
   "A sign-up form with first name, last name, email, password, and confirm password. There's an option to sign up with Google and GitHub.";
 
@@ -28,7 +29,7 @@ interface SignUpFormData {
 
 const SignUpPage: React.FC = () => {
   const [error, setError] = useState<string>(''); 
-  const [role, setRole] = useState<string>('user');
+  const [role, setRole] = useState<string>('');
   const [formData, setFormData] = useState<SignUpFormData>({
     firstName: '',
     lastName: '',
@@ -37,13 +38,21 @@ const SignUpPage: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user',
+    role: '',
   }); 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleRoleChange = (value: string) => {
+    setRole(value);
+    setFormData({
+      ...formData,
+      role: value,
     });
   };
 
@@ -58,16 +67,15 @@ const SignUpPage: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const response = await fetch('http://localhost:5000/lcms/user/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstName,
-          lastName,
-          userName,
-          mobile,
+          first_name:firstName,
+          last_name:lastName,
+          phone_number: mobile,
           email,
           password,
           role,
@@ -142,10 +150,10 @@ const SignUpPage: React.FC = () => {
                 required
                 className="bg-transparent"
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
+                onChange={(e) => handleRoleChange(e.target.value)}
               >
-                <SelectItem key="user" value="user">Client</SelectItem>
-                <SelectItem key="admin" value="admin">Lawyer</SelectItem>
+                <SelectItem key="client" value="client">Client</SelectItem>
+                <SelectItem key="lawyer" value="lawyer">Lawyer</SelectItem>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-2">

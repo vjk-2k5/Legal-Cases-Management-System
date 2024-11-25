@@ -6,15 +6,15 @@ import bcrypt from 'bcrypt';
 const saltRounds = 10;
 
 export const register = async (req: Request, res: Response) : Promise<void> => {
-    const { username, password } = req.body;
+    const { email, password,first_name,last_name,role,phone_number } = req.body;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const result = await query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *', [username, hashedPassword]);
+    const result = await query('INSERT INTO users (email, password ,first_name,last_name,role,phone_number) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [email, hashedPassword,first_name,last_name,role,phone_number]);
     res.status(201).send(result.rows[0]);
 };
 
 export const login = async (req: Request, res: Response) : Promise<void> => {
-    const { username, password } = req.body;
-    const result = await query('SELECT * FROM users WHERE username = $1', [username]);
+    const { email, password } = req.body;
+    const result = await query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
     if (!user) {
         res.status(401).send('Invalid credentials');
@@ -26,7 +26,7 @@ export const login = async (req: Request, res: Response) : Promise<void> => {
         return;
     }
     const token = generateToken(user);
-    res.send({ token });
+    res.send({ user, token });
 };
 
 export const getUsers = async (req: Request, res: Response) : Promise<void> => {

@@ -11,18 +11,66 @@ import {
 import { FaGoogle, FaLinkedin } from "react-icons/fa"; 
 import { GithubIcon } from "@/components/icons"; 
 import { title } from "@/components/primitives";
-
+import { useState } from "react";
 export const description =
   "A login form with email and password. There's an option to login with Google and a link to sign up if you don't have an account.";
 
-export default function LoginForm() {
-  const router = useRouter();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    
-    router.push('/home');
-  };
+
+  export default function LoginForm() {
+    const router = useRouter();
+    const [error, setError] = useState<string>(''); 
+  
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      
+      const email = e.currentTarget.email.value;
+      const password = e.currentTarget.password.value;
+  
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+  
+      try {
+        const response = await fetch('http://localhost:5000/lcms/user/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+  
+        if (!response.ok) {
+          const errorData = await response.json();
+          setError(errorData.message || 'Login failed');
+          return;
+        }
+  
+        const data = await response.json();
+  
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('user_id', data.user.user_id);
+        localStorage.setItem('role', data.user.role);
+        localStorage.setItem('name', data.user.first_name);
+
+        switch (data.user.role) {
+          case 'client':
+            router.push('/client/dashboard');
+            break;
+          case 'lawyer':
+            router.push('/lawyer/dashboard');
+            break;
+          default:
+            router.push('/');
+            break;
+        }
+
+      } catch (error) {
+        setError('An error occurred during login');
+      }
+    };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[url('/image.jpeg')] bg-cover bg-center">
