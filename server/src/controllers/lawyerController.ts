@@ -63,27 +63,7 @@ export const getCases = async (req: Request, res: Response) => {
     try {
         
         const response = await query(`
-            SELECT 
-        c.case_id,
-        c.title AS case_title,
-        c.status AS case_status,
-        cl.client_id,
-        l.lawyer_id,
-        c.next_hearing_date,
-        u_client.first_name AS client_first_name,
-        u_lawyer.first_name AS lawyer_first_name
-      FROM 
-        Cases c
-      JOIN 
-        Clients cl ON c.client_id = cl.client_id
-      JOIN 
-        Lawyers l ON c.lawyer_id = l.lawyer_id
-      JOIN 
-        Users u_client ON cl.user_id = u_client.user_id  
-      JOIN 
-        Users u_lawyer ON l.user_id = u_lawyer.user_id  
-      WHERE 
-        c.lawyer_id = $1;`, 
+            SELECT * FROM lawyer_case_details WHERE lawyer_id = $1;`, 
             [lawyer_id]  
         );
         
@@ -92,3 +72,30 @@ export const getCases = async (req: Request, res: Response) => {
         res.status(500).json({ error });   
     }
 };
+
+export const getAppointmentByLawyerId = async (req: Request, res: Response) => {
+    const { lawyer_id } = req.body; 
+    
+    try {
+        
+        const response = await query(`
+           SELECT * FROM get_appointments_for_lawyer($1);`, 
+            [lawyer_id]  
+        );
+        
+        res.status(200).json(response.rows);  
+    } catch (error) {
+        res.status(500).json({ error });   
+    }
+};
+
+export const updateAppointment = async (req: Request, res: Response) => {
+    const { appointment_id, appointment_date,location } = req.body;
+    try {
+        console.log(appointment_id, appointment_date,location);
+        const response = await query('CALL update_appointment($1, $2, $3);', [ appointment_id,appointment_date,location]); 
+        res.status(200).json(response.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+}
