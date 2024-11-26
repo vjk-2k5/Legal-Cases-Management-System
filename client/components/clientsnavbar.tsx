@@ -39,7 +39,7 @@ const clientNavbar = () => {
     localStorage.removeItem('name');
     localStorage.removeItem('authToken');
     localStorage.removeItem('user_id');
-    localStorage.removeItem('team_id');
+    localStorage.removeItem('client_id');
     window.location.href = '/login';
   };
 

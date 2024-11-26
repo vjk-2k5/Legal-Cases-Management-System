@@ -1,9 +1,10 @@
-// page.tsx
-
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardBody, CardHeader, Divider, Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Input, Textarea, useDisclosure } from '@nextui-org/react';
+import React, { useEffect, useState } from 'react';
+import { 
+  Card, CardBody, CardHeader, Divider, Button, Modal, ModalContent, 
+  ModalHeader, ModalBody, ModalFooter, Input, Textarea, useDisclosure 
+} from '@nextui-org/react';
 
 interface Case {
   case_id: number;
@@ -22,84 +23,162 @@ interface CaseNote {
 }
 
 const CasesManagement: React.FC = () => {
-  const [cases, setCases] = useState<Case[]>([
-    {
-      case_id: 1,
-      client_id: 1,
-      lawyer_id: 1,
-      title: 'Case 1',
-      status: 'Open',
-      next_hearing_date: '2023-11-01',
-    },
-    {
-      case_id: 2,
-      client_id: 2,
-      lawyer_id: 1,
-      title: 'Case 2',
-      status: 'Closed',
-      next_hearing_date: '2023-12-15',
-    },
-  ]);
-
-  const [caseNotes, setCaseNotes] = useState<CaseNote[]>([
-    {
-      note_id: 1,
-      case_id: 1,
-      lawyer_id: 1,
-      note: 'Initial consultation completed.',
-    },
-    {
-      note_id: 2,
-      case_id: 2,
-      lawyer_id: 1,
-      note: 'Case closed successfully.',
-    },
-  ]);
-
+  const [cases, setCases] = useState<Case[]>([]);
+  const [caseNotes, setCaseNotes] = useState<CaseNote[]>([]); 
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [newCase, setNewCase] = useState<Partial<Case>>({});
   const [newNote, setNewNote] = useState('');
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isNewCaseOpen, onOpen: onNewCaseOpen, onClose: onNewCaseClose } = useDisclosure();
 
+  useEffect(() => {
+    const fetchCases = async () => {
+      const authToken = localStorage.getItem('authToken');
+      const response = await fetch('http://localhost:5000/lcms/lawyer/fetchCases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ lawyer_id: parseInt(localStorage.getItem('lawyer_id') || '0') }),
+      });
+
+      if (response.ok) {
+        const data: Case[] = await response.json();
+        setCases(data);
+      } else {
+        console.error('Failed to fetch cases');
+      }
+    };
+
+    fetchCases();
+  }, []);
+
   const handleViewCase = (caseItem: Case) => {
     setSelectedCase(caseItem);
+    fetchCaseNotes(caseItem.case_id); 
     onOpen();
   };
 
-  const handleAddNote = () => {
-    if (selectedCase) {
-      const newCaseNote: CaseNote = {
-        note_id: Date.now(), // Just a placeholder for unique ID
-        case_id: selectedCase.case_id,
-        lawyer_id: selectedCase.lawyer_id,
-        note: newNote,
-      };
-
-      setCaseNotes([...caseNotes, newCaseNote]);
-      setNewNote('');
+  const handleAddNote = async () => {
+    if (selectedCase && newNote) {
+      const authToken = localStorage.getItem('authToken');
+  
+      try {
+        const response = await fetch('http://localhost:5000/lcms/lawyer/updateCase', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            case_id: selectedCase.case_id,
+            lawyer_id: selectedCase.lawyer_id,
+            status: selectedCase.status,
+            next_hearing_date: selectedCase.next_hearing_date,
+            case_notes: newNote,
+          }),
+        });
+  
+        if (response.ok) {
+          const updatedCase = await response.json();
+          setCaseNotes([
+            ...caseNotes,
+            { note_id: Date.now(), case_id: updatedCase.case_id, lawyer_id: updatedCase.lawyer_id, note: newNote },
+          ]);
+          setNewNote('');
+        } else {
+          console.error('Failed to add note');
+        }
+      } catch (error) {
+        console.error('Error adding note:', error);
+      }
     }
   };
 
-  const handleRegisterCase = () => {
+  const handleRegisterCase = async () => {
     const newCaseData: Case = {
-      case_id: Date.now(), // Just a placeholder for unique ID
+      case_id: Date.now(), 
       client_id: newCase.client_id || 0,
-      lawyer_id: newCase.lawyer_id || 0,
+      lawyer_id: parseInt(localStorage.getItem('lawyer_id') || '0'),
       title: newCase.title || '',
       status: newCase.status || '',
       next_hearing_date: newCase.next_hearing_date || '',
     };
 
-    setCases([...cases, newCaseData]);
-    setNewCase({});
-    onNewCaseClose();
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch('http://localhost:5000/lcms/lawyer/addCase', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(newCaseData),
+    });
+
+    if (response.ok) {
+      const savedCase = await response.json();
+      setCases([...cases, savedCase]);
+      setNewCase({});
+      onNewCaseClose();
+    } else {
+      console.error('Failed to register case');
+    }
   };
 
-  const handleUpdateCase = () => {
+  const fetchCaseNotes = async (case_id: number) => {
+    const authToken = localStorage.getItem('authToken');
+    const response = await fetch('http://localhost:5000/lcms/lawyer/fetchCaseNotesAndConcatenate', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ case_id }),
+    });
+
+    if (response.ok) {
+      const notes: CaseNote[] = await response.json();
+      setCaseNotes(notes); 
+    } else {
+      console.error('Failed to fetch case notes');
+    }
+  };
+
+  const handleUpdateCase = async () => {
     if (selectedCase) {
-      setCases(cases.map((c) => (c.case_id === selectedCase.case_id ? selectedCase : c)));
-      onClose();
+      const authToken = localStorage.getItem('authToken');
+  
+      try {
+        const response = await fetch('http://localhost:5000/lcms/lawyer/updateCase', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            case_id: selectedCase.case_id,
+            lawyer_id: selectedCase.lawyer_id,
+            status: selectedCase.status,
+            next_hearing_date: selectedCase.next_hearing_date,
+            case_notes: newNote, 
+          }),
+        });
+  
+        if (response.ok) {
+          const updatedCase = await response.json();
+          setCases(cases.map((c) => (c.case_id === updatedCase.case_id ? updatedCase : c)));
+          setCaseNotes([
+            ...caseNotes,
+            { note_id: Date.now(), case_id: updatedCase.case_id, lawyer_id: updatedCase.lawyer_id, note: newNote },
+          ]);
+          setNewNote('');
+          onClose();
+        } else {
+          console.error('Failed to update case');
+        }
+      } catch (error) {
+        console.error('Error updating case:', error);
+      }
     }
   };
 
@@ -151,7 +230,6 @@ const CasesManagement: React.FC = () => {
                 value={selectedCase.next_hearing_date}
                 onChange={(e) => setSelectedCase({ ...selectedCase, next_hearing_date: e.target.value })}
               />
-              <p><strong>Lawyer ID:</strong> {selectedCase.lawyer_id}</p>
               <Divider />
               <h4>Case Notes</h4>
               {caseNotes.filter((note) => note.case_id === selectedCase.case_id).map((note) => (
@@ -163,7 +241,7 @@ const CasesManagement: React.FC = () => {
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
               />
-              <Button className="mt-4" onPress={handleAddNote}>
+              <Button className="mt-2" onPress={handleAddNote}>
                 Add Note
               </Button>
             </ModalBody>
@@ -181,19 +259,21 @@ const CasesManagement: React.FC = () => {
 
       <Modal isOpen={isNewCaseOpen} onOpenChange={onNewCaseClose}>
         <ModalContent>
-          <ModalHeader>
-            <h3>Register New Case</h3>
-          </ModalHeader>
+          <ModalHeader>Register New Case</ModalHeader>
           <ModalBody>
             <Input
               label="Title"
-              placeholder="Enter case title"
               value={newCase.title || ''}
               onChange={(e) => setNewCase({ ...newCase, title: e.target.value })}
             />
             <Input
+              label="Client ID"
+              type="number"
+              value={newCase.client_id || ''}
+              onChange={(e) => setNewCase({ ...newCase, client_id: parseInt(e.target.value) })}
+            />
+            <Input
               label="Status"
-              placeholder="Enter case status"
               value={newCase.status || ''}
               onChange={(e) => setNewCase({ ...newCase, status: e.target.value })}
             />
@@ -202,18 +282,6 @@ const CasesManagement: React.FC = () => {
               type="date"
               value={newCase.next_hearing_date || ''}
               onChange={(e) => setNewCase({ ...newCase, next_hearing_date: e.target.value })}
-            />
-            <Input
-              label="Lawyer ID"
-              placeholder="Enter lawyer ID"
-              value={newCase.lawyer_id || ''}
-              onChange={(e) => setNewCase({ ...newCase, lawyer_id: parseInt(e.target.value) })}
-            />
-            <Input
-              label="Client ID"
-              placeholder="Enter client ID"
-              value={newCase.client_id || ''}
-              onChange={(e) => setNewCase({ ...newCase, client_id: parseInt(e.target.value) })}
             />
           </ModalBody>
           <ModalFooter>

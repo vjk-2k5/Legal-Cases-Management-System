@@ -135,7 +135,7 @@ const ClientDashboard: React.FC = () => {
         return;
       }
   
-      // Ensure date is in ISO format before sending
+      
       const appointmentToSend = {
         ...newAppointment,
         appointment_date: new Date(newAppointment.appointment_date).toISOString(),
@@ -156,7 +156,7 @@ const ClientDashboard: React.FC = () => {
       if (response.ok) {
         const newApp = await response.json();
         setAppointments([...appointments, newApp]);
-        onClose(); // Close the modal after successful booking
+        onClose(); 
       } else {
         console.error('Failed to book appointment.');
       }
@@ -168,7 +168,7 @@ const ClientDashboard: React.FC = () => {
 
   const formatDateTimeForInput = (date: string | Date) => {
     const d = new Date(date);
-    return d.toISOString().slice(0, 16); // Trims seconds and timezone
+    return d.toISOString().slice(0, 16); 
   };
 
   const upcomingAppointments = appointments.filter(

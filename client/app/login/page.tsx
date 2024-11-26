@@ -32,7 +32,7 @@ export const description =
         setError('Please enter a valid email address');
         return;
       }
-  
+      console.log(email);
       try {
         const response = await fetch('http://localhost:5000/lcms/user/login', {
           method: 'POST',
@@ -41,7 +41,7 @@ export const description =
           },
           body: JSON.stringify({ email, password }),
         });
-  
+        console.log(response);
         if (!response.ok) {
           const errorData = await response.json();
           setError(errorData.message || 'Login failed');
@@ -57,10 +57,10 @@ export const description =
 
         switch (data.user.role) {
           case 'client':
-            router.push('/client/dashboard');
+            router.push('/clients/dashboard');
             break;
           case 'lawyer':
-            router.push('/lawyer/dashboard');
+            router.push('/lawyers/dashboard');
             break;
           default:
             router.push('/');
