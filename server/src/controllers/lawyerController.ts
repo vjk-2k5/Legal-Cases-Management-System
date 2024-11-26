@@ -99,3 +99,54 @@ export const updateAppointment = async (req: Request, res: Response) => {
         res.status(500).json({ error });
     }
 }
+
+export const fetchClient = async (req: Request, res: Response) => {
+    
+    try {
+        const response = await query(
+    `SELECT 
+    cases.case_id,
+    cases.title,
+    cases.status,
+    cases.next_hearing_date,
+    clients.client_id,
+    users.first_name AS client_first_name,
+    users.user_id AS client_user_id,
+    users.email AS client_email,
+    (SELECT COUNT(*) 
+        FROM appointments 
+        WHERE appointments.client_id = clients.client_id
+    ) AS total_appointments,
+    (SELECT AVG(appointment_date::timestamp - CURRENT_TIMESTAMP) 
+        FROM appointments 
+        WHERE appointments.client_id = clients.client_id
+    ) AS avg_days_until_next_appointment
+    FROM 
+        cases
+    FULL JOIN 
+        clients 
+        ON cases.client_id = clients.client_id
+    LEFT JOIN 
+        users 
+        ON users.user_id = clients.user_id
+    LEFT JOIN 
+        (SELECT client_id, COUNT(*) AS appointment_count
+        FROM appointments
+        GROUP BY client_id
+        ) AS appointment_counts 
+        ON appointment_counts.client_id = clients.client_id
+    LEFT JOIN 
+        (SELECT client_id, MAX(appointment_date) AS last_appointment_date
+        FROM appointments
+        GROUP BY client_id
+        ) AS last_appointments 
+        ON last_appointments.client_id = clients.client_id
+    WHERE 
+        cases.status = 'pending' AND users.first_name IS NOT NULL
+    ORDER BY 
+        cases.next_hearing_date DESC;`);
+        res.status(200).json(response.rows);
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+}

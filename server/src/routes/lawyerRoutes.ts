@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getLawyerFromUserId,addCase,getAppointmentByLawyerId,updateAppointment,fetchCases,updateCase,fetchCaseNotesAndConcatenate,getCases } from '../controllers/lawyerController';
+import { getLawyerFromUserId,addCase,fetchClient,getAppointmentByLawyerId,updateAppointment,fetchCases,updateCase,fetchCaseNotesAndConcatenate,getCases } from '../controllers/lawyerController';
 import { authenticateJWT } from '../middleware/authMiddleware';
 
 const router = Router();
@@ -12,5 +12,5 @@ router.post('/fetchCaseNotesAndConcatenate', authenticateJWT, fetchCaseNotesAndC
 router.post('/getCases', authenticateJWT, getCases);
 router.post('/getAppointmentByLawyerId', authenticateJWT, getAppointmentByLawyerId);
 router.post('/updateAppointment', authenticateJWT, updateAppointment);
-
+router.get('/fetchClient', authenticateJWT, fetchClient);
 export default router;

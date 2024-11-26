@@ -4,20 +4,8 @@
 
 import React, { useState } from 'react';
 import { Card, CardBody, CardHeader, Divider } from '@nextui-org/react';
+import { useEffect } from 'react';
 
-interface User {
-  user_id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone_number: string;
-}
-
-interface Client {
-  client_id: number;
-  user_id: number;
-  additional_client_info: string;
-}
 
 interface Case {
   case_id: number;
@@ -26,107 +14,90 @@ interface Case {
   title: string;
   status: string;
   next_hearing_date: string;
+  avg_days_until_next_appointment: {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    milliseconds: number;
+  };
+  total_appointments: string;
+  client_email: string;
+  client_first_name: string;
+  client_user_id: number;
 }
 
+
 const ClientContacts: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>([
-    {
-      client_id: 1,
-      user_id: 1,
-      additional_client_info: 'Additional info for client 1',
-    },
-    {
-      client_id: 2,
-      user_id: 2,
-      additional_client_info: 'Additional info for client 2',
-    },
-  ]);
+  
 
-  const [users, setUsers] = useState<User[]>([
-    {
-      user_id: 1,
-      email: 'john.doe@example.com',
-      first_name: 'John',
-      last_name: 'Doe',
-      phone_number: '123-456-7890',
-    },
-    {
-      user_id: 2,
-      email: 'jane.smith@example.com',
-      first_name: 'Jane',
-      last_name: 'Smith',
-      phone_number: '098-765-4321',
-    },
-  ]);
 
-  const [cases, setCases] = useState<Case[]>([
-    {
-      case_id: 1,
-      client_id: 1,
-      lawyer_id: 1,
-      title: 'Case 1',
-      status: 'Open',
-      next_hearing_date: '2023-11-01',
-    },
-    {
-      case_id: 2,
-      client_id: 2,
-      lawyer_id: 1,
-      title: 'Case 2',
-      status: 'Closed',
-      next_hearing_date: '2023-12-15',
-    },
-  ]);
+  const [cases, setCases] = useState<Case[]>([]);
 
-  const getClientUser = (client_id: number) => {
-    const client = clients.find((client) => client.client_id === client_id);
-    if (client) {
-      return users.find((user) => user.user_id === client.user_id);
-    }
-    return null;
-  };
+  useEffect(() => {
+    const authToken = localStorage.getItem('authToken');
+    const fetchCases = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/lcms/lawyer/fetchClient', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+  
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data);  
+          if (Array.isArray(data)) {
+            setCases(data);  
+          } else {
+            console.error('Received data is not an array');
+          }
+        } else {
+          console.error('Failed to fetch cases');
+        }
+      } catch (error) {
+        console.error('Error fetching cases:', error);
+      }
+    };
+  
+    fetchCases();
+  }, []);
 
-  const getClientCases = (client_id: number) => {
-    return cases.filter((caseItem) => caseItem.client_id === client_id);
-  };
+
 
   return (
     <div className="p-4">
       <h1 className="text-center mb-8 text-4xl text-blue-600">Client Contacts</h1>
-
+  
       <div className="flex flex-wrap gap-6">
-        {clients.map((client) => {
-          const clientUser = getClientUser(client.client_id);
-          const clientCases = getClientCases(client.client_id);
-          if (clientUser) {
-            return (
-              <Card key={client.client_id} isHoverable variant="bordered" className="flex-1 min-w-[300px] ">
-                <CardHeader className="bg-blue-600 text-white">
-                  <h3 className="text-lg">{`${clientUser.first_name} ${clientUser.last_name}`}</h3>
-                </CardHeader>
+        {cases.map((caseItem) => {
+          
+          return (
+            <Card key={caseItem.case_id} isHoverable variant="bordered" className="flex-1 min-w-[300px]">
+              <CardHeader className="bg-blue-600 text-white">
+                <h3 className="text-lg">{`${caseItem.client_first_name} `}</h3>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                <p>Client ID: {caseItem.client_id}</p>
+                <p>Email: {caseItem.client_email}</p>
+                <p>Status: {caseItem.status}</p>
+                <p>Next Hearing Date: {new Date(caseItem.next_hearing_date).toLocaleDateString()}</p>
+                <p>Total Appointments: {caseItem.total_appointments}</p>
+                <p>Days Until Next Appointment: {caseItem.avg_days_until_next_appointment.days} days</p>
                 <Divider />
-                <CardBody>
-                  <p>Client ID: {client.client_id}</p>
-                  <p>Email: {clientUser.email}</p>
-                  <p>Phone: {clientUser.phone_number}</p>
-                  <Divider />
-                  <h4 className="mt-4">Cases</h4>
-                  {clientCases.map((caseItem) => (
-                    <div key={caseItem.case_id}>
-                      <p>Case Title: {caseItem.title}</p>
-                      <p>Status: {caseItem.status}</p>
-                      <Divider />
-                    </div>
-                  ))}
-                </CardBody>
-              </Card>
-            );
-          }
-          return null;
+                <h4 className="mt-4">Case Details</h4>
+                <p>Case Title: {caseItem.title}</p>
+                <p>Status: {caseItem.status}</p>
+              </CardBody>
+            </Card>
+          );
         })}
       </div>
     </div>
   );
-};
+};  
 
 export default ClientContacts;
