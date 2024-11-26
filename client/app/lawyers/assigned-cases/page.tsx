@@ -1,8 +1,6 @@
-// page.tsx
-
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardBody, CardHeader, Divider, Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@nextui-org/react';
 
 interface Case {
@@ -12,6 +10,10 @@ interface Case {
   title: string;
   status: string;
   next_hearing_date: string;
+  client_first_name: string;
+  client_last_name: string;
+  lawyer_first_name: string;
+  lawyer_last_name: string;
 }
 
 interface Client {
@@ -21,47 +23,61 @@ interface Client {
   last_name: string;
 }
 
+interface Lawyer {
+  lawyer_id: number;
+  user_id: number;
+  first_name: string;
+  last_name: string;
+  specialization: string;
+}
+
 const AssignedCases: React.FC = () => {
-  const [cases, setCases] = useState<Case[]>([
-    {
-      case_id: 1,
-      client_id: 1,
-      lawyer_id: 1,
-      title: 'Case 1',
-      status: 'Open',
-      next_hearing_date: '2023-11-01',
-    },
-    {
-      case_id: 2,
-      client_id: 2,
-      lawyer_id: 1,
-      title: 'Case 2',
-      status: 'Closed',
-      next_hearing_date: '2023-12-15',
-    },
-  ]);
-
-  const [clients, setClients] = useState<Client[]>([
-    {
-      client_id: 1,
-      user_id: 1,
-      first_name: 'John',
-      last_name: 'Doe',
-    },
-    {
-      client_id: 2,
-      user_id: 2,
-      first_name: 'Jane',
-      last_name: 'Smith',
-    },
-  ]);
-
+  const [cases, setCases] = useState<Case[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+
+  useEffect(() => {
+    const fetchCasesAndClients = async () => {
+      try {
+        const authToken = localStorage.getItem('authToken');
+        const lawyer_id = localStorage.getItem('lawyer_id');
+        const casesResponse = await fetch('http://localhost:5000/lcms/lawyer/getCases', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ lawyer_id }),
+        });
+        const casesData = await casesResponse.json();
+        console.log(casesData);
+        setCases(casesData);
+
+        const clientsResponse = await fetch('/api/clients');
+        const clientsData = await clientsResponse.json();
+        setClients(clientsData);
+
+        const lawyersResponse = await fetch('/api/lawyers');
+        const lawyersData = await lawyersResponse.json();
+        setLawyers(lawyersData);
+      } catch (error) {
+        console.error('Error fetching cases or clients:', error);
+      }
+    };
+
+    fetchCasesAndClients();
+  }, []);
 
   const getClientName = (client_id: number) => {
     const client = clients.find((client) => client.client_id === client_id);
     return client ? `${client.first_name} ${client.last_name}` : 'Unknown';
+  };
+
+  const getLawyerName = (lawyer_id: number) => {
+    const lawyer = lawyers.find((lawyer) => lawyer.lawyer_id === lawyer_id);
+    return lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Unknown';
   };
 
   const handleViewCase = (caseItem: Case) => {
@@ -81,7 +97,7 @@ const AssignedCases: React.FC = () => {
             </CardHeader>
             <Divider />
             <CardBody>
-              <p>Client: {getClientName(caseItem.client_id)}</p>
+              <p>Client: {caseItem.client_first_name}</p>
               <p>Status: {caseItem.status}</p>
               <Button className="mt-4" onPress={() => handleViewCase(caseItem)}>
                 View Case Details
@@ -98,11 +114,11 @@ const AssignedCases: React.FC = () => {
               <h3>Case Details</h3>
             </ModalHeader>
             <ModalBody>
-              <p><strong>Title:</strong> {selectedCase.title}</p>
-              <p><strong>Client:</strong> {getClientName(selectedCase.client_id)}</p>
-              <p><strong>Status:</strong> {selectedCase.status}</p>
+              <p><strong>Title:</strong> {selectedCase.case_title}</p>
+              <p><strong>Client:</strong> {selectedCase.client_first_name}</p>
+              <p><strong>Status:</strong> {selectedCase.case_status}</p>
               <p><strong>Next Hearing Date:</strong> {new Date(selectedCase.next_hearing_date).toLocaleDateString()}</p>
-              <p><strong>Lawyer ID:</strong> {selectedCase.lawyer_id}</p>
+              <p><strong>Lawyer:</strong> {selectedCase.lawyer_first_name}</p>
             </ModalBody>
             <ModalFooter>
               <Button color="primary" onPress={onClose}>

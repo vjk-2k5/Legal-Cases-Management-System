@@ -1,8 +1,6 @@
-// page.tsx
-
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardBody, CardHeader, Divider, Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Input, useDisclosure } from '@nextui-org/react';
 
 interface Appointment {
@@ -11,6 +9,10 @@ interface Appointment {
   lawyer_id: number;
   appointment_date: string;
   location: string;
+  client_first_name: string;
+  client_last_name: string;
+  lawyer_first_name: string;
+  lawyer_last_name: string;
 }
 
 interface Case {
@@ -30,81 +32,79 @@ interface Client {
 }
 
 const LawyerAppointments: React.FC = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      appointment_id: 1,
-      client_id: 1,
-      lawyer_id: 1,
-      appointment_date: '2023-10-20T10:00:00',
-      location: 'Courtroom A',
-    },
-    {
-      appointment_id: 2,
-      client_id: 2,
-      lawyer_id: 1,
-      appointment_date: '2023-11-05T14:00:00',
-      location: 'Courtroom B',
-    },
-  ]);
-
-  const [cases, setCases] = useState<Case[]>([
-    {
-      case_id: 1,
-      client_id: 1,
-      lawyer_id: 1,
-      title: 'Case 1',
-      status: 'Open',
-      next_hearing_date: '2023-11-01',
-    },
-    {
-      case_id: 2,
-      client_id: 2,
-      lawyer_id: 1,
-      title: 'Case 2',
-      status: 'Closed',
-      next_hearing_date: '2023-12-15',
-    },
-  ]);
-
-  const [clients, setClients] = useState<Client[]>([
-    {
-      client_id: 1,
-      user_id: 1,
-      first_name: 'John',
-      last_name: 'Doe',
-    },
-    {
-      client_id: 2,
-      user_id: 2,
-      first_name: 'Jane',
-      last_name: 'Smith',
-    },
-  ]);
-
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
-  const getClientName = (client_id: number) => {
-    const client = clients.find((client) => client.client_id === client_id);
-    return client ? `${client.first_name} ${client.last_name}` : 'Unknown';
-  };
-
-  const getCaseTitle = (case_id: number) => {
-    const caseItem = cases.find((caseItem) => caseItem.case_id === case_id);
-    return caseItem ? caseItem.title : 'Unknown';
-  };
 
   const handleEditAppointment = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     onOpen();
   };
-
-  const handleUpdateAppointment = () => {
+  const handleUpdateAppointment = async () => {
     if (selectedAppointment) {
-      setAppointments(appointments.map((a) => (a.appointment_id === selectedAppointment.appointment_id ? selectedAppointment : a)));
-      onClose();
+      try {
+        console.log('Updating appointment:', selectedAppointment);
+        const authToken = localStorage.getItem('authToken');
+        const response = await fetch('http://localhost:5000/lcms/lawyer/updateAppointment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            appointment_id: selectedAppointment.appointment_id,
+            appointment_date: selectedAppointment.appointment_date,
+            location: selectedAppointment.location,
+          }),
+        });
+  
+        if (response.ok) {
+          
+          setAppointments(appointments.map((a) => (a.appointment_id === selectedAppointment.appointment_id ? selectedAppointment : a)));
+          onClose();
+        } else {
+          console.error('Error updating appointment', response.statusText);
+        }
+      } catch (error) {
+        console.error('Failed to update appointment', error);
+      }
     }
   };
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      const authToken = localStorage.getItem('authToken');
+      const lawyerId = localStorage.getItem('lawyer_id');
+      if (authToken && lawyerId) {
+        try {
+          const response = await fetch('http://localhost:5000/lcms/lawyer/getAppointmentByLawyerId', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ lawyer_id: lawyerId }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Appointments:', data);
+            setAppointments(data);
+     
+          } else {
+            console.error('Error fetching data', response.statusText);
+          }
+        } catch (error) {
+          console.error('Failed to fetch appointments', error);
+        }
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   return (
     <div className="p-4">
@@ -112,14 +112,15 @@ const LawyerAppointments: React.FC = () => {
 
       <div className="flex flex-wrap gap-6">
         {appointments.map((appointment) => (
-          <Card key={appointment.appointment_id} isHoverable variant="bordered" className="flex-1 min-w-[300px] ">
+          <Card key={appointment.appointment_id} isHoverable variant="bordered" className="flex-1 min-w-[300px]">
             <CardHeader className="bg-blue-600 text-white">
               <h3 className="text-lg">Appointment</h3>
             </CardHeader>
             <Divider />
             <CardBody>
-              <p>Case: {getCaseTitle(appointment.case_id)}</p>
-              <p>Client: {getClientName(appointment.client_id)}</p>
+              <p>Case: {appointment.appointment_id}</p>
+              <p>Client: {`${appointment.client_first_name} ${appointment.client_last_name}`}</p>
+              <p>Lawyer: {`${appointment.lawyer_first_name} ${appointment.lawyer_last_name}`}</p>
               <p>Date: {new Date(appointment.appointment_date).toLocaleString()}</p>
               <p>Location: {appointment.location}</p>
               <Button className="mt-4" onPress={() => handleEditAppointment(appointment)}>
