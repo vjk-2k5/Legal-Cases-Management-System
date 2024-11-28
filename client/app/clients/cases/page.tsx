@@ -1,5 +1,3 @@
-// page.tsx
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -7,131 +5,87 @@ import { Card, CardBody, CardHeader, Divider, Accordion, AccordionItem } from '@
 
 interface Case {
   case_id: number;
-  title: string;
-  status: string;
+  case_title: string;
+  case_status: string;
   next_hearing_date: string;
+  notes: string;
   lawyer_id: number;
-}
-
-interface Appointment {
-  appointment_id: number;
-  case_id: number;
-  appointment_date: string;
-  location: string;
-}
-
-interface CaseNote {
-  note_id: number;
-  case_id: number;
-  lawyer_id: number;
-  note: string;
-}
-
-interface Lawyer {
-  lawyer_id: number;
-  first_name: string;
-  last_name: string;
+  lawyer_specialization: string;
+  lawyer_first_name: string;
+  lawyer_last_name: string;
+  lawyer_email: string;
+  lawyer_phone_number: string;
 }
 
 const ClientCases: React.FC = () => {
-  const [cases, setCases] = useState<Case[]>([
-    {
-      case_id: 1,
-      title: 'Case 1',
-      status: 'Open',
-      next_hearing_date: '2023-11-01',
-      lawyer_id: 1,
-    },
-    {
-      case_id: 2,
-      title: 'Case 2',
-      status: 'Closed',
-      next_hearing_date: '2023-12-15',
-      lawyer_id: 2,
-    },
-  ]);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      appointment_id: 1,
-      case_id: 1,
-      appointment_date: '2023-10-20T10:00:00',
-      location: 'Courtroom A',
-    },
-    {
-      appointment_id: 2,
-      case_id: 2,
-      appointment_date: '2023-11-05T14:00:00',
-      location: 'Courtroom B',
-    },
-  ]);
+  
 
-  const [caseNotes, setCaseNotes] = useState<CaseNote[]>([
-    {
-      note_id: 1,
-      case_id: 1,
-      lawyer_id: 1,
-      note: 'Initial consultation completed.',
-    },
-    {
-      note_id: 2,
-      case_id: 2,
-      lawyer_id: 2,
-      note: 'Case closed successfully.',
-    },
-  ]);
+  useEffect(() => {
+    const fetchCasesData = async () => {
+      const client_id = localStorage.getItem('client_id'); 
+      const authToken = localStorage.getItem('authToken');
+      try {
+        const response = await fetch('http://localhost:5000/lcms/client/fetchCases', {  
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ client_id }), 
+        });
 
-  const [lawyers, setLawyers] = useState<Lawyer[]>([
-    {
-      lawyer_id: 1,
-      first_name: 'John',
-      last_name: 'Doe',
-    },
-    {
-      lawyer_id: 2,
-      first_name: 'Jane',
-      last_name: 'Smith',
-    },
-  ]);
+        if (!response.ok) {
+          throw new Error('Failed to fetch cases');
+        }
 
-  const getLawyerName = (lawyer_id: number) => {
-    const lawyer = lawyers.find((lawyer) => lawyer.lawyer_id === lawyer_id);
-    return lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Unknown';
+        const data = await response.json();
+        setCases(data);
+        setLoading(false);
+      } catch (error: any) {
+        setError(error.message);
+        setLoading(false);
+      }
+    };
+
+    fetchCasesData();
+  }, []);
+
+  const getLawyerName = (lawyer_first_name: string, lawyer_last_name: string) => {
+    return `${lawyer_first_name} ${lawyer_last_name}`;
   };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="p-4">
-      <h1 className="text-center mb-8 text-4xl text-blue-600">
-        List of Cases
-      </h1>
+      <h1 className="text-center mb-8 text-4xl text-blue-600">List of Cases</h1>
 
       <h2 className="text-2xl text-blue-600">Case Summaries</h2>
       <div className="flex flex-wrap gap-6">
         {cases.map((caseItem) => (
           <Card key={caseItem.case_id} isHoverable variant="bordered" className="flex-1 min-w-[300px]">
             <CardHeader className="bg-blue-600 text-white">
-              <h3 className="text-lg">{caseItem.title}</h3>
+              <h3 className="text-lg">{caseItem.case_title}</h3>
             </CardHeader>
             <Divider />
             <CardBody>
-              <p>Status: {caseItem.status}</p>
-              <p>Assigned Lawyer: {getLawyerName(caseItem.lawyer_id)}</p>
+              <p>Status: {caseItem.case_status}</p>
+              <p>Assigned Lawyer: {getLawyerName(caseItem.lawyer_first_name, caseItem.lawyer_last_name)}</p>
+              <p>Specialization: {caseItem.lawyer_specialization}</p>
               <Accordion>
                 <AccordionItem title="View Details">
                   <h4 className="text-lg">Case Notes</h4>
-                  {caseNotes
-                    .filter((note) => note.case_id === caseItem.case_id)
-                    .map((note) => (
-                      <p key={note.note_id}>{note.note}</p>
-                    ))}
-                  <h4 className="text-lg mt-4">Appointments</h4>
-                  {appointments
-                    .filter((appointment) => appointment.case_id === caseItem.case_id)
-                    .map((appointment) => (
-                      <p key={appointment.appointment_id}>
-                        Date: {new Date(appointment.appointment_date).toLocaleString()} - Location: {appointment.location}
-                      </p>
-                    ))}
+                  <p>{caseItem.notes}</p>
+                  <h4 className="text-lg mt-4">Next Hearing Date</h4>
+                  <p>{new Date(caseItem.next_hearing_date).toLocaleString()}</p>
+                  <h4 className="text-lg mt-4">Lawyer Contact</h4>
+                  <p>Email: {caseItem.lawyer_email}</p>
+                  <p>Phone: {caseItem.lawyer_phone_number}</p>
                 </AccordionItem>
               </Accordion>
             </CardBody>
