@@ -1,9 +1,20 @@
-// page.tsx
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardBody, CardHeader, Divider, Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Input, DatePicker, useDisclosure } from '@nextui-org/react';
+import { 
+  Card, 
+  CardBody, 
+  CardHeader, 
+  Divider, 
+  Button, 
+  Modal, 
+  ModalContent, 
+  ModalHeader, 
+  ModalBody, 
+  ModalFooter, 
+  Input, 
+  useDisclosure 
+} from '@nextui-org/react';
 
 interface Lawyer {
   lawyer_id: number;
@@ -15,83 +26,90 @@ interface Lawyer {
 }
 
 const ContactsPage: React.FC = () => {
-  const [caseLawyers, setCaseLawyers] = useState<Lawyer[]>([
-    {
-      lawyer_id: 1,
-      first_name: 'John',
-      last_name: 'Doe',
-      email: 'john.doe@example.com',
-      phone_number: '123-456-7890',
-      specialization: 'Criminal Law',
-    },
-    {
-      lawyer_id: 2,
-      first_name: 'Jane',
-      last_name: 'Smith',
-      email: 'jane.smith@example.com',
-      phone_number: '098-765-4321',
-      specialization: 'Family Law',
-    },
-  ]);
-
-  const [otherLawyers, setOtherLawyers] = useState<Lawyer[]>([
-    {
-      lawyer_id: 3,
-      first_name: 'Alice',
-      last_name: 'Johnson',
-      email: 'alice.johnson@example.com',
-      phone_number: '555-123-4567',
-      specialization: 'Corporate Law',
-    },
-    {
-      lawyer_id: 4,
-      first_name: 'Bob',
-      last_name: 'Brown',
-      email: 'bob.brown@example.com',
-      phone_number: '555-987-6543',
-      specialization: 'Intellectual Property Law',
-    },
-  ]);
-
+  const [caseLawyers, setCaseLawyers] = useState<Lawyer[]>([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState({
-    case_id: '',
+    lawyer_id: '', // Add lawyer_id to appointmentDetails state
     appointment_date: '',
     location: '',
   });
 
+  useEffect(() => {
+    const fetchLawyers = async () => {
+      try {
+        const authToken = localStorage.getItem('authToken');
+
+        const caseResponse = await fetch('http://localhost:5000/lcms/client/getLawyers', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+          },
+        });
+
+        if (caseResponse.ok) {
+          const caseData = await caseResponse.json();
+          setCaseLawyers(caseData);
+        } else {
+          console.error('Failed to fetch case lawyers');
+        }
+      } catch (error) {
+        console.error('Error fetching lawyers:', error);
+      }
+    };
+
+    fetchLawyers();
+  }, []);
+
   const handleHireLawyer = (lawyer: Lawyer) => {
     setSelectedLawyer(lawyer);
+    setAppointmentDetails((prevDetails) => ({
+      ...prevDetails,
+      lawyer_id: lawyer.lawyer_id, // Set the lawyer_id in appointmentDetails when hiring
+    }));
     onOpen();
   };
 
-  const confirmHireLawyer = () => {
-    if (selectedLawyer) {
-      // Logic to book the first appointment with the lawyer
-      const newAppointment = {
-        appointment_id: Date.now(), // Just a placeholder for unique ID
-        case_id: parseInt(appointmentDetails.case_id),
-        lawyer_id: selectedLawyer.lawyer_id,
-        appointment_date: appointmentDetails.appointment_date,
-        location: appointmentDetails.location,
-      };
+  const formatDateTimeForInput = (date: string | Date) => {
+    const d = new Date(date);
+    return d.toISOString().slice(0, 16); 
+  };
 
-      // Assuming we have an API endpoint to book an appointment
-      fetch('/api/client/appointments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newAppointment),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log('Appointment booked:', data);
-          onClose();
-        })
-        .catch((error) => console.error(error));
+  const confirmHireLawyer = () => {
+    if (!appointmentDetails.appointment_date) {
+      console.error("Appointment date is required.");
+      alert("Please select a valid appointment date.");
+      return; // Stop execution if the date is invalid
     }
+  
+    if (!selectedLawyer) {
+      console.error("No lawyer selected.");
+      return;
+    }
+
+    const newAppointment = {
+      client_id: localStorage.getItem('client_id'),
+      lawyer_id: appointmentDetails.lawyer_id, // Send the selected lawyer's id
+      appointment_date: appointmentDetails.appointment_date, 
+      location: appointmentDetails.location,
+    };
+  
+    fetch('http://localhost:5000/lcms/client/addAppointment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: JSON.stringify(newAppointment),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to book appointment");
+        return response.json();
+      })
+      .then((data) => {
+        console.log('Appointment booked:', data);
+        onClose();
+      })
+      .catch((error) => console.error("Error booking appointment:", error));
   };
 
   return (
@@ -101,24 +119,7 @@ const ContactsPage: React.FC = () => {
       <h2 className="text-2xl text-blue-600">Case Lawyers</h2>
       <div className="flex flex-wrap gap-6">
         {caseLawyers.map((lawyer) => (
-          <Card key={lawyer.lawyer_id} isHoverable variant="bordered" className="flex-1 min-w-[300px] ">
-            <CardHeader className="bg-blue-600 text-white">
-              <h3 className="text-lg">{`${lawyer.first_name} ${lawyer.last_name}`}</h3>
-            </CardHeader>
-            <Divider />
-            <CardBody>
-              <p>Email: {lawyer.email}</p>
-              <p>Phone: {lawyer.phone_number}</p>
-              <p>Specialization: {lawyer.specialization}</p>
-            </CardBody>
-          </Card>
-        ))}
-      </div>
-
-      <h2 className="mt-8 text-2xl text-blue-600">Other Lawyers</h2>
-      <div className="flex flex-wrap gap-6">
-        {otherLawyers.map((lawyer) => (
-          <Card key={lawyer.lawyer_id} isHoverable variant="bordered" className="flex-1 min-w-[300px] ">
+          <Card key={lawyer.lawyer_id} isHoverable variant="bordered" className="flex-1 min-w-[300px]">
             <CardHeader className="bg-blue-600 text-white">
               <h3 className="text-lg">{`${lawyer.first_name} ${lawyer.last_name}`}</h3>
             </CardHeader>
@@ -143,11 +144,16 @@ const ContactsPage: React.FC = () => {
             </ModalHeader>
             <ModalBody>
               <p>Book the first appointment with {selectedLawyer.first_name} {selectedLawyer.last_name}</p>
-              <DatePicker
+              <Input
+                type="datetime-local"
                 label="Appointment Date"
-                placeholder="Select Date"
-                value={appointmentDetails.appointment_date ? new Date(appointmentDetails.appointment_date) : undefined}
-                onChange={(date) => setAppointmentDetails({ ...appointmentDetails, appointment_date: date?.toISOString() || '' })}
+                value={formatDateTimeForInput(appointmentDetails.appointment_date || new Date())}
+                onChange={(e) => {
+                  setAppointmentDetails({
+                    ...appointmentDetails,
+                    appointment_date: e.target.value, // Store as an ISO string
+                  });
+                }}
               />
               <Input
                 label="Location"
