@@ -33,8 +33,6 @@ interface Client {
 
 const LawyerAppointments: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [cases, setCases] = useState<Case[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
