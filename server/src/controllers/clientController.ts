@@ -30,8 +30,9 @@ export const getAppointmentsByUserId = async (req: Request, res: Response): Prom
     try {
         const result = await query(
             `
-            SELECT 
-                a.*, 
+            SELECT DISTINCT ON (ca.case_id)
+                a.*,
+                ca.*, 
                 u.first_name AS user_name
             FROM 
                 appointments a
@@ -39,6 +40,8 @@ export const getAppointmentsByUserId = async (req: Request, res: Response): Prom
                 clients c ON a.client_id = c.client_id
             JOIN 
                 users u ON c.user_id = u.user_id
+            JOIN
+                cases ca ON ca.client_id = a.client_id 
             WHERE 
                 u.user_id = $1
             `,

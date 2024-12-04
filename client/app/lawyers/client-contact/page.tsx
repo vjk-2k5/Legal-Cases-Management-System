@@ -86,7 +86,6 @@ const ClientContacts: React.FC = () => {
                 <p>Status: {caseItem.status}</p>
                 <p>Next Hearing Date: {new Date(caseItem.next_hearing_date).toLocaleDateString()}</p>
                 <p>Total Appointments: {caseItem.total_appointments}</p>
-                <p>Days Until Next Appointment: {caseItem.avg_days_until_next_appointment.days} days</p>
                 <Divider />
                 <h4 className="mt-4">Case Details</h4>
                 <p>Case Title: {caseItem.title}</p>
