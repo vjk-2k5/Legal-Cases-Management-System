@@ -14,12 +14,12 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
       if (!token) {
         router.push('/login');
       } else {
-        setIsAuthenticated(true); // Mark as authenticated if token exists
+        setIsAuthenticated(true); 
       }
     }, []);
 
-    // Show nothing or a loading indicator while checking authentication status
-    if (isAuthenticated === null) return null; // Or use a loading spinner here
+    
+    if (isAuthenticated === null) return null; 
 
     return <WrappedComponent {...props} />;
   };

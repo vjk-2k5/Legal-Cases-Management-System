@@ -1,13 +1,8 @@
 import "@/styles/globals.css";
-import { Metadata, Viewport } from "next";
-import { Link } from "@nextui-org/link";
-import clsx from "clsx";
+import { Viewport } from "next";
+
 
 import { Providers } from "@/app/providers";
-//import { useAuthCheck } from "../hoc/useAuthCheck";
-
-import { siteConfig } from "@/config/site";
-import { fontSans } from "@/config/fonts";
 import  Navbar  from "@/components/lawyernavbar";
 
 export const viewport: Viewport = {
@@ -22,9 +17,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  //const { loading, authenticated } = useAuthCheck();
 
-  //if (loading) return <div>Loading...</div>; 
   return (
     <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
       <div className="relative flex flex-col h-screen">

@@ -30,7 +30,7 @@ const ContactsPage: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
   const [appointmentDetails, setAppointmentDetails] = useState({
-    lawyer_id: '', // Add lawyer_id to appointmentDetails state
+    lawyer_id: '', 
     appointment_date: '',
     location: '',
   });
@@ -64,7 +64,7 @@ const ContactsPage: React.FC = () => {
     setSelectedLawyer(lawyer);
     setAppointmentDetails((prevDetails) => ({
       ...prevDetails,
-      lawyer_id: lawyer.lawyer_id, // Set the lawyer_id in appointmentDetails when hiring
+      lawyer_id: lawyer.lawyer_id,
     }));
     onOpen();
   };
@@ -78,7 +78,7 @@ const ContactsPage: React.FC = () => {
     if (!appointmentDetails.appointment_date) {
       console.error("Appointment date is required.");
       alert("Please select a valid appointment date.");
-      return; // Stop execution if the date is invalid
+      return; 
     }
   
     if (!selectedLawyer) {
@@ -88,7 +88,7 @@ const ContactsPage: React.FC = () => {
 
     const newAppointment = {
       client_id: localStorage.getItem('client_id'),
-      lawyer_id: appointmentDetails.lawyer_id, // Send the selected lawyer's id
+      lawyer_id: appointmentDetails.lawyer_id, 
       appointment_date: appointmentDetails.appointment_date, 
       location: appointmentDetails.location,
     };
@@ -151,7 +151,7 @@ const ContactsPage: React.FC = () => {
                 onChange={(e) => {
                   setAppointmentDetails({
                     ...appointmentDetails,
-                    appointment_date: e.target.value, // Store as an ISO string
+                    appointment_date: e.target.value, 
                   });
                 }}
               />

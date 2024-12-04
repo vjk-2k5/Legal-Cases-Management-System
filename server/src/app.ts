@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import userRoutes from './routes/userRoutes';
 import clientRoutes from './routes/clientRoutes';
 import lawyerRoutes from './routes/lawyerRoutes';
-
 import cors from 'cors';
 
 dotenv.config();

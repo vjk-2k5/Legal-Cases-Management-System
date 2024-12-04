@@ -1,7 +1,7 @@
 'use client';
 import Link from "next/link";
-import { useRouter } from 'next/navigation'; // Correct import for useRouter
-import { Button, Input, Spacer } from "@nextui-org/react"; // Importing Button, Input, and Spacer from Next UI
+import { useRouter } from 'next/navigation'; 
+import { Button, Input, Spacer } from "@nextui-org/react"; 
 import {
   Card,
   CardHeader,
